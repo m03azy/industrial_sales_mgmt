@@ -52,7 +52,7 @@ class RegisteredUserController extends Controller
 
         $profileData = [
             'company_name' => $request->company_name,
-            'contact_person' => $request->contact_person,
+            'contact_person' => $request->contact_person ?? $request->name, // Use user name if contact_person not provided
             'email' => $request->email,
             'phone' => $request->phone,
             'address' => $request->address,

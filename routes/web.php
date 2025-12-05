@@ -117,22 +117,41 @@ Route::middleware('auth')->group(function () {
         Route::post('users/{user}/approve', [\App\Http\Controllers\Admin\UserManagementController::class, 'approve'])->name('users.approve');
         Route::post('users/{user}/suspend', [\App\Http\Controllers\Admin\UserManagementController::class, 'suspend'])->name('users.suspend');
 
+        // POS System
+        Route::get('pos', [\App\Http\Controllers\Admin\PosController::class, 'index'])->name('pos.index');
+        Route::get('pos/search', [\App\Http\Controllers\Admin\PosController::class, 'search'])->name('pos.search');
+        Route::post('pos/checkout', [\App\Http\Controllers\Admin\PosController::class, 'checkout'])->name('pos.checkout');
+
     });
+    
     // Cart routes for retailers
-    Route::get('cart', [\App\Http\Controllers\CartController::class, 'index'])->name('cart.index');
-    Route::post('cart/add', [\App\Http\Controllers\CartController::class, 'add'])->name('cart.add');
-    Route::post('cart/remove', [\App\Http\Controllers\CartController::class, 'remove'])->name('cart.remove');
-    Route::post('cart/update', [\App\Http\Controllers\CartController::class, 'update'])->name('cart.update');
-    Route::post('cart/checkout', [\App\Http\Controllers\CartController::class, 'checkout'])->name('cart.checkout');
+    Route::middleware(['auth'])->group(function () {
+        Route::get('cart', [\App\Http\Controllers\CartController::class, 'index'])->name('cart.index');
+        Route::post('cart/add', [\App\Http\Controllers\CartController::class, 'add'])->name('cart.add');
+        Route::post('cart/remove', [\App\Http\Controllers\CartController::class, 'remove'])->name('cart.remove');
+        Route::post('cart/update', [\App\Http\Controllers\CartController::class, 'update'])->name('cart.update');
+        Route::post('cart/clear', [\App\Http\Controllers\CartController::class, 'clear'])->name('cart.clear');
+        Route::get('cart/checkout', [\App\Http\Controllers\CartController::class, 'checkout'])->name('cart.checkout');
+        Route::post('cart/process-checkout', [\App\Http\Controllers\CartController::class, 'processCheckout'])->name('cart.process-checkout');
+        
+        // Invoice routes
+        Route::get('invoice/{order}/download', [\App\Http\Controllers\InvoiceController::class, 'download'])->name('invoice.download');
+        Route::get('invoice/{order}/view', [\App\Http\Controllers\InvoiceController::class, 'view'])->name('invoice.view');
+        Route::post('invoice/{order}/email', [\App\Http\Controllers\InvoiceController::class, 'email'])->name('invoice.email');
+    });
+    
     // Inventory adjustment routes
     Route::get('inventory/{product}/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
     Route::post('inventory/{product}/adjust', [InventoryController::class, 'storeAdjustment'])->name('inventory.store');
     // Export data
     Route::get('export/{type}', [ExportController::class, 'export'])->name('export.data');
-    // Invoice
-    Route::get('orders/{order}/invoice', [InvoiceController::class, 'show'])->name('orders.invoice');
-    Route::get('orders/{order}/invoice/pdf', [InvoiceController::class, 'downloadPdf'])->name('orders.invoice.pdf');
-    Route::post('orders/{order}/invoice/generate', [InvoiceController::class, 'generate'])->name('orders.invoice.generate');
+
+    // Driver Portal
+    Route::middleware(['auth'])->prefix('driver')->name('driver.')->group(function () {
+        Route::get('deliveries', [\App\Http\Controllers\Driver\DriverDeliveryController::class, 'index'])->name('deliveries.index');
+        Route::get('deliveries/{delivery}', [\App\Http\Controllers\Driver\DriverDeliveryController::class, 'show'])->name('deliveries.show');
+        Route::patch('deliveries/{delivery}/status', [\App\Http\Controllers\Driver\DriverDeliveryController::class, 'updateStatus'])->name('deliveries.update-status');
+    });
 });
 
 require __DIR__.'/auth.php';

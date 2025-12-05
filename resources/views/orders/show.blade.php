@@ -5,20 +5,17 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ $order->order_number }}</h2>
-                    <div class="space-x-2">
-                <a href="{{ route($routePrefix . '.edit', $order) }}" class="text-blue-600 hover:text-blue-900">Edit</a>
-                <form action="{{ route($routePrefix . '.destroy', $order) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure?')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
-                </form>
-                <a href="{{ route('orders.invoice', $order) }}" class="ml-2 inline-flex items-center px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">View Invoice</a>
-                <a href="{{ route('orders.invoice.pdf', $order) }}" class="ml-2 inline-flex items-center px-3 py-1 bg-gray-800 text-white rounded hover:bg-gray-900">Download PDF</a>
-
-                <form action="{{ route('orders.invoice.generate', $order) }}" method="POST" class="inline ms-2">
-                    @csrf
-                    <button type="submit" class="inline-flex items-center px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700">Generate PDF</button>
-                </form>
+            <div class="space-x-2">
+                @if(auth()->user()->role === 'admin')
+                    <a href="{{ route('admin.orders.edit', $order) }}" class="text-blue-600 hover:text-blue-900">Edit</a>
+                    <form action="{{ route('admin.orders.destroy', $order) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
+                    </form>
+                @endif
+                <a href="{{ route('invoice.view', $order) }}" target="_blank" class="ml-2 inline-flex items-center px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">View Invoice</a>
+                <a href="{{ route('invoice.download', $order) }}" class="ml-2 inline-flex items-center px-3 py-1 bg-gray-800 text-white rounded hover:bg-gray-900">Download PDF</a>
                 </div>
         </div>
     </x-slot>

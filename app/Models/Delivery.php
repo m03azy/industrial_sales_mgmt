@@ -16,11 +16,21 @@ class Delivery extends Model
         'delivery_time',
         'distance_km',
         'price',
+        'pickup_latitude',
+        'pickup_longitude',
+        'pickup_address',
+        'delivery_latitude',
+        'delivery_longitude',
+        'delivery_address',
+        'estimated_duration_minutes',
+        'proof_of_delivery',
+        'delivered_at',
     ];
 
     protected $casts = [
         'pickup_time' => 'datetime',
         'delivery_time' => 'datetime',
+        'delivered_at' => 'datetime',
     ];
 
     public function order()

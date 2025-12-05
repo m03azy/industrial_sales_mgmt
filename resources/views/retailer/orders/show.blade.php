@@ -76,10 +76,18 @@
             </div>
 
             <!-- Actions -->
-            <div class="flex justify-between">
+            <div class="flex justify-between items-center">
                 <a href="{{ route('retailer.orders.index') }}" class="text-indigo-600 hover:text-indigo-900">
                     ← Back to Orders
                 </a>
+                <div class="flex gap-3">
+                    <a href="{{ route('invoice.view', $order) }}" target="_blank" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition">
+                        View Invoice
+                    </a>
+                    <a href="{{ route('invoice.download', $order) }}" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition">
+                        Download Invoice
+                    </a>
+                </div>
             </div>
         </div>
     </div>

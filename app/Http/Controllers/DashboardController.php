@@ -94,36 +94,6 @@ class DashboardController extends Controller
 
     public function driver()
     {
-        $user = auth()->user();
-        
-        // Get or create driver profile
-        $driver = $user->driver;
-        
-        if (!$driver) {
-            // If no driver profile exists, show empty dashboard
-            $activeDeliveries = collect();
-            $stats = [
-                'assigned' => 0,
-                'completed' => 0,
-                'earnings' => 0,
-            ];
-            return view('dashboards.driver', compact('activeDeliveries', 'stats'));
-        }
-
-        $activeDeliveries = $driver->deliveries()
-            ->whereIn('status', ['assigned', 'in_transit'])
-            ->with('order.retailer')
-            ->get();
-
-        $stats = [
-            'assigned' => $activeDeliveries->count(),
-            'completed' => $driver->deliveries()
-                ->where('status', 'delivered')
-                ->whereMonth('updated_at', now()->month)
-                ->count(),
-            'earnings' => 0, // Placeholder for now
-        ];
-
-        return view('dashboards.driver', compact('activeDeliveries', 'stats'));
+        return redirect()->route('driver.deliveries.index');
     }
 }

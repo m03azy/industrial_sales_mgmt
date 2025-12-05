@@ -42,6 +42,21 @@
             </div>
         </x-nav-link>
 
+        @if(auth()->user()->role === 'retailer')
+            <x-nav-link :href="route('cart.index')" :active="request()->routeIs('cart.*')" class="block py-3 px-4 rounded transition duration-200 hover:bg-indigo-800 hover:text-white {{ request()->routeIs('cart.*') ? 'bg-indigo-800 text-white' : 'text-indigo-100' }}">
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    <span>{{ __('Cart') }}</span>
+                    @php
+                        $cartCount = \App\Models\CartItem::where('user_id', auth()->id())->sum('quantity');
+                    @endphp
+                    @if($cartCount > 0)
+                        <span class="bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $cartCount }}</span>
+                    @endif
+                </div>
+            </x-nav-link>
+        @endif
+
         <!-- Admin Links -->
         @if(auth()->user()->role === 'admin')
             <div class="mt-4 mb-2 px-4 text-xs font-semibold text-indigo-400 uppercase tracking-wider">Admin Management</div>
@@ -173,7 +188,7 @@
         @if(auth()->user()->role === 'driver')
             <div class="mt-4 mb-2 px-4 text-xs font-semibold text-indigo-400 uppercase tracking-wider">Driver Operations</div>
             
-            <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" class="block py-3 px-4 rounded transition duration-200 hover:bg-indigo-800 hover:text-white {{ request()->routeIs('dashboard') ? 'bg-indigo-800 text-white' : 'text-indigo-100' }}">
+            <x-nav-link :href="route('driver.deliveries.index')" :active="request()->routeIs('driver.deliveries.*')" class="block py-3 px-4 rounded transition duration-200 hover:bg-indigo-800 hover:text-white {{ request()->routeIs('driver.deliveries.*') ? 'bg-indigo-800 text-white' : 'text-indigo-100' }}">
                 <div class="flex items-center gap-3">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 012-2v0a2 2 0 012 2m9-2a2 2 0 012 2v0a2 2 0 012-2"></path></svg>
                     {{ __('My Deliveries') }}

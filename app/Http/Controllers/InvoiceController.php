@@ -3,61 +3,84 @@
 namespace App\Http\Controllers;
 
 use App\Models\SalesOrder;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Mail;
 
 class InvoiceController extends Controller
 {
-    /**
-     * Show a simple invoice view for the given order.
-     */
-    public function show(SalesOrder $order)
+    public function download($orderId)
     {
-        $order->load(['customer', 'orderItems.product']);
-        return view('invoices.show', compact('order'));
+        $order = SalesOrder::with(['orderItems.product', 'retailer', 'user'])
+            ->findOrFail($orderId);
+
+        // Authorization check
+        $user = auth()->user();
+        if ($user->role === 'retailer' && $order->user_id !== $user->id) {
+            abort(403, 'Unauthorized access to invoice.');
+        }
+
+        // Generate invoice number if not exists
+        if (!$order->invoice_number) {
+            $order->update([
+                'invoice_number' => 'INV-' . date('Y') . '-' . str_pad($order->id, 6, '0', STR_PAD_LEFT)
+            ]);
+        }
+
+        $pdf = PDF::loadView('invoices.template', compact('order'));
+        
+        return $pdf->download('invoice-' . $order->invoice_number . '.pdf');
     }
 
-    /**
-     * Download invoice as PDF (requires barryvdh/laravel-dompdf).
-     */
-    public function downloadPdf(SalesOrder $order)
+    public function view($orderId)
     {
-        $order->load(['customer', 'orderItems.product']);
-        $storagePath = storage_path('app/invoices/' . $order->order_number . '.pdf');
+        $order = SalesOrder::with(['orderItems.product', 'retailer', 'user'])
+            ->findOrFail($orderId);
 
-        // If a stored PDF exists, serve it
-        if (file_exists($storagePath)) {
-            return response()->download($storagePath, $order->order_number . '.pdf');
+        // Authorization check
+        $user = auth()->user();
+        if ($user->role === 'retailer' && $order->user_id !== $user->id) {
+            abort(403, 'Unauthorized access to invoice.');
         }
 
-        if (!class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
-            abort(501, 'PDF generation is not available. Run: composer require barryvdh/laravel-dompdf');
+        // Generate invoice number if not exists
+        if (!$order->invoice_number) {
+            $order->update([
+                'invoice_number' => 'INV-' . date('Y') . '-' . str_pad($order->id, 6, '0', STR_PAD_LEFT)
+            ]);
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoices.pdf', compact('order'));
-
-        return $pdf->download($order->order_number . '.pdf');
+        $pdf = PDF::loadView('invoices.template', compact('order'));
+        
+        return $pdf->stream('invoice-' . $order->invoice_number . '.pdf');
     }
 
-    /**
-     * Generate and store invoice PDF for an order (if dompdf available).
-     */
-    public function generate(SalesOrder $order)
+    public function email($orderId)
     {
-        $order->load(['customer', 'orderItems.product']);
+        $order = SalesOrder::with(['orderItems.product', 'retailer', 'user'])
+            ->findOrFail($orderId);
 
-        if (!class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
-            return redirect()->back()->with('error', 'PDF generation is not available. Run: composer require barryvdh/laravel-dompdf');
+        // Authorization check (admin or order owner)
+        $user = auth()->user();
+        if ($user->role !== 'admin' && $order->user_id !== $user->id) {
+            abort(403, 'Unauthorized action.');
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoices.pdf', compact('order'));
-
-        $dir = storage_path('app/invoices');
-        if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
+        // Generate invoice number if not exists
+        if (!$order->invoice_number) {
+            $order->update([
+                'invoice_number' => 'INV-' . date('Y') . '-' . str_pad($order->id, 6, '0', STR_PAD_LEFT)
+            ]);
         }
 
-        $file = $dir . '/' . $order->order_number . '.pdf';
-        file_put_contents($file, $pdf->output());
+        $pdf = PDF::loadView('invoices.template', compact('order'));
+        
+        // Send email with PDF attachment
+        Mail::send('emails.invoice', compact('order'), function($message) use ($order, $pdf) {
+            $message->to($order->user->email)
+                    ->subject('Invoice ' . $order->invoice_number . ' - SmartSupply')
+                    ->attachData($pdf->output(), 'invoice-' . $order->invoice_number . '.pdf');
+        });
 
-        return redirect()->route('orders.invoice', $order)->with('success', 'Invoice PDF generated and stored.');
+        return redirect()->back()->with('success', 'Invoice sent to ' . $order->user->email);
     }
 }

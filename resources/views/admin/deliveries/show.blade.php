@@ -87,6 +87,12 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Delivery Route Map -->
+                    <div class="mt-6">
+                        <h4 class="font-semibold text-gray-700 mb-4 text-lg">Delivery Route</h4>
+                        <x-delivery-map :delivery="$delivery" />
+                    </div>
                 </div>
             </div>
         </div>

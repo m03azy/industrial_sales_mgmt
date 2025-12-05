@@ -11,6 +11,9 @@
             <!-- Monthly Revenue Chart -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
                 <h3 class="text-lg font-semibold mb-4">Monthly Revenue (Last 12 Months)</h3>
+                <div class="relative h-64 w-full mb-6">
+                    <canvas id="revenueChart"></canvas>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
@@ -40,6 +43,9 @@
                 <!-- Top Selling Products -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
                     <h3 class="text-lg font-semibold mb-4">Top Selling Products</h3>
+                    <div class="relative h-64 w-full mb-4">
+                        <canvas id="topProductsChart"></canvas>
+                    </div>
                     <ul class="divide-y divide-gray-200">
                         @forelse($topProducts as $item)
                             <li class="py-3 flex justify-between items-center">
@@ -58,6 +64,9 @@
                 <!-- Order Trends -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
                     <h3 class="text-lg font-semibold mb-4">Order Trends</h3>
+                    <div class="relative h-64 w-full mb-4">
+                        <canvas id="orderTrendsChart"></canvas>
+                    </div>
                     <ul class="divide-y divide-gray-200">
                         @forelse($orderTrends as $trend)
                             <li class="py-3 flex justify-between">
@@ -142,4 +151,98 @@
 
         </div>
     </div>
+
+    @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Revenue Chart
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: {!! json_encode($monthlyRevenue->pluck('month')) !!},
+                datasets: [{
+                    label: 'Revenue ($)',
+                    data: {!! json_encode($monthlyRevenue->pluck('revenue')) !!},
+                    borderColor: 'rgb(79, 70, 229)',
+                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Top Products Chart
+        const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
+        new Chart(topProductsCtx, {
+            type: 'bar',
+            data: {
+                labels: {!! json_encode($topProducts->pluck('product.name')) !!},
+                datasets: [{
+                    label: 'Units Sold',
+                    data: {!! json_encode($topProducts->pluck('total_sold')) !!},
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Order Trends Chart
+        const orderTrendsCtx = document.getElementById('orderTrendsChart').getContext('2d');
+        new Chart(orderTrendsCtx, {
+            type: 'bar',
+            data: {
+                labels: {!! json_encode($orderTrends->pluck('month')) !!},
+                datasets: [{
+                    label: 'Orders',
+                    data: {!! json_encode($orderTrends->pluck('order_count')) !!},
+                    backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                    borderColor: 'rgb(34, 197, 94)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 }
+                    }
+                }
+            }
+        });
+    </script>
+    @endpush
 </x-app-layout>

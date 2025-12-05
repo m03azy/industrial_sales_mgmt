@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Product;
+use App\Models\CartItem;
 use App\Models\SalesOrder;
 use App\Models\OrderItem;
 
@@ -11,23 +12,15 @@ class CartController extends Controller
 {
     public function index()
     {
-        $cart = session('cart', []);
-        $items = [];
-        $total = 0;
-        foreach ($cart as $entry) {
-            $product = Product::find($entry['product_id']);
-            if (!$product) continue;
-            $item = [
-                'product' => $product,
-                'quantity' => $entry['quantity'],
-                'unit_price' => $product->selling_price,
-            ];
-            $item['line_total'] = $item['quantity'] * $item['unit_price'];
-            $total += $item['line_total'];
-            $items[] = $item;
-        }
+        $cartItems = CartItem::with('product.factory')
+            ->where('user_id', auth()->id())
+            ->get();
+        
+        $subtotal = $cartItems->sum('subtotal');
+        $tax = $subtotal * 0.18; // 18% tax
+        $total = $subtotal + $tax;
 
-        return view('cart.index', compact('items', 'total'));
+        return view('cart.index', compact('cartItems', 'subtotal', 'tax', 'total'));
     }
 
     public function add(Request $request)
@@ -36,120 +29,175 @@ class CartController extends Controller
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1',
         ]);
-        // Ensure requested quantity does not exceed available stock
-        $product = Product::find($validated['product_id']);
-        if ($product && $validated['quantity'] > $product->stock_quantity) {
+
+        $product = Product::findOrFail($validated['product_id']);
+
+        // Check stock availability
+        if ($validated['quantity'] > $product->stock_quantity) {
             return redirect()->back()->with('error', 'Requested quantity exceeds available stock.');
         }
-        $cart = session('cart', []);
-        $found = false;
-        foreach ($cart as &$entry) {
-            if ($entry['product_id'] == $validated['product_id']) {
-                $entry['quantity'] += $validated['quantity'];
-                $found = true;
-                break;
+
+        // Check if item already in cart
+        $cartItem = CartItem::where('user_id', auth()->id())
+            ->where('product_id', $validated['product_id'])
+            ->first();
+
+        if ($cartItem) {
+            // Update quantity
+            $newQuantity = $cartItem->quantity + $validated['quantity'];
+            
+            if ($newQuantity > $product->stock_quantity) {
+                return redirect()->back()->with('error', 'Cannot add more. Stock limit reached.');
             }
+            
+            $cartItem->update(['quantity' => $newQuantity]);
+        } else {
+            // Create new cart item
+            CartItem::create([
+                'user_id' => auth()->id(),
+                'product_id' => $validated['product_id'],
+                'quantity' => $validated['quantity'],
+                'price' => $product->selling_price,
+            ]);
         }
-        unset($entry);
 
-        if (!$found) {
-            $cart[] = ['product_id' => $validated['product_id'], 'quantity' => $validated['quantity']];
-        }
-
-        session(['cart' => $cart]);
-
-        return redirect()->back()->with('success', 'Added to cart.');
-    }
-
-    public function remove(Request $request)
-    {
-        $validated = $request->validate(['product_id' => 'required|exists:products,id']);
-        $cart = session('cart', []);
-        $cart = array_values(array_filter($cart, function ($e) use ($validated) {
-            return $e['product_id'] != $validated['product_id'];
-        }));
-        session(['cart' => $cart]);
-        return redirect()->route('cart.index')->with('success', 'Item removed.');
+        return redirect()->back()->with('success', 'Product added to cart successfully!');
     }
 
     public function update(Request $request)
     {
-        $validated = $request->validate(['quantities' => 'required|array']);
-        $cart = session('cart', []);
-        foreach ($cart as &$entry) {
-            if (isset($validated['quantities'][$entry['product_id']])) {
-                $q = (int) $validated['quantities'][$entry['product_id']];
-                $entry['quantity'] = max(1, $q);
-            }
-        }
-        unset($entry);
-        session(['cart' => $cart]);
-        return redirect()->route('cart.index')->with('success', 'Cart updated.');
-    }
-
-    public function checkout(Request $request)
-    {
-        $cart = session('cart', []);
-        if (empty($cart)) {
-            return redirect()->route('cart.index')->with('error', 'Cart is empty.');
-        }
-
-        $linkedCustomer = auth()->check() ? auth()->user()->customer : null;
-        if (!$linkedCustomer) {
-            return redirect()->route('login')->with('error', 'Please login as a customer to checkout.');
-        }
-
         $validated = $request->validate([
-            'order_date' => 'required|date',
-            'delivery_method' => 'nullable|string',
+            'cart_item_id' => 'required|exists:cart_items,id',
+            'quantity' => 'required|integer|min:1',
         ]);
 
-        // Validate stock for all cart items before creating the order
-        $insufficient = [];
-        foreach ($cart as $entry) {
-            $product = Product::find($entry['product_id']);
-            if (!$product) continue;
-            if ($entry['quantity'] > $product->stock_quantity) {
-                $insufficient[] = $product->name;
+        $cartItem = CartItem::where('id', $validated['cart_item_id'])
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        // Check stock
+        if ($validated['quantity'] > $cartItem->product->stock_quantity) {
+            return redirect()->back()->with('error', 'Requested quantity exceeds available stock.');
+        }
+
+        $cartItem->update(['quantity' => $validated['quantity']]);
+
+        return redirect()->route('cart.index')->with('success', 'Cart updated successfully!');
+    }
+
+    public function remove(Request $request)
+    {
+        $validated = $request->validate([
+            'cart_item_id' => 'required|exists:cart_items,id'
+        ]);
+
+        CartItem::where('id', $validated['cart_item_id'])
+            ->where('user_id', auth()->id())
+            ->delete();
+
+        return redirect()->route('cart.index')->with('success', 'Item removed from cart.');
+    }
+
+    public function clear()
+    {
+        CartItem::where('user_id', auth()->id())->delete();
+
+        return redirect()->route('cart.index')->with('success', 'Cart cleared successfully.');
+    }
+
+    public function checkout()
+    {
+        $cartItems = CartItem::with('product.factory')
+            ->where('user_id', auth()->id())
+            ->get();
+
+        if ($cartItems->isEmpty()) {
+            return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
+        }
+
+        // Check if user is a retailer
+        $retailer = auth()->user()->retailer;
+        if (!$retailer) {
+            return redirect()->route('cart.index')->with('error', 'Only retailers can checkout.');
+        }
+
+        $subtotal = $cartItems->sum('subtotal');
+        $tax = $subtotal * 0.18;
+        $total = $subtotal + $tax;
+
+        return view('cart.checkout', compact('cartItems', 'retailer', 'subtotal', 'tax', 'total'));
+    }
+
+    public function processCheckout(Request $request)
+    {
+        $validated = $request->validate([
+            'delivery_address' => 'required|string|max:500',
+            'delivery_notes' => 'nullable|string|max:1000',
+            'payment_method' => 'required|in:cash,bank_transfer,mobile_money',
+        ]);
+
+        $cartItems = CartItem::with('product')
+            ->where('user_id', auth()->id())
+            ->get();
+
+        if ($cartItems->isEmpty()) {
+            return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
+        }
+
+        $retailer = auth()->user()->retailer;
+        if (!$retailer) {
+            return redirect()->route('cart.index')->with('error', 'Only retailers can place orders.');
+        }
+
+        // Validate stock for all items
+        foreach ($cartItems as $item) {
+            if ($item->quantity > $item->product->stock_quantity) {
+                return redirect()->route('cart.index')
+                    ->with('error', "Insufficient stock for {$item->product->name}. Please update your cart.");
             }
         }
 
-        if (!empty($insufficient)) {
-            $msg = 'Insufficient stock for: ' . implode(', ', $insufficient) . '. Please adjust quantities.';
-            return redirect()->route('cart.index')->with('error', $msg);
-        }
+        \DB::transaction(function () use ($cartItems, $retailer, $validated) {
+            // Calculate totals
+            $subtotal = $cartItems->sum('subtotal');
+            $tax = $subtotal * 0.18;
+            $total = $subtotal + $tax;
 
-        \DB::transaction(function () use ($cart, $linkedCustomer, $validated) {
+            // Create order
             $order = SalesOrder::create([
-                'customer_id' => $linkedCustomer->id,
-                'order_number' => 'ORD-' . strtoupper(uniqid()),
-                'order_date' => $validated['order_date'],
+                'order_number' => 'ORD-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6)),
+                'customer_id' => $retailer->id,
+                'retailer_id' => $retailer->id,
+                'user_id' => auth()->id(),
+                'order_date' => now(),
                 'status' => 'draft',
-                'sales_agent_id' => auth()->id(),
-                'delivery_method' => $validated['delivery_method'] ?? null,
+                'subtotal' => $subtotal,
+                'tax' => $tax,
+                'total_amount' => $total,
+                'delivery_address' => $validated['delivery_address'],
+                'delivery_notes' => $validated['delivery_notes'] ?? null,
+                'payment_method' => $validated['payment_method'],
             ]);
 
-            $totalAmount = 0;
-            foreach ($cart as $entry) {
-                $product = Product::find($entry['product_id']);
-                if (!$product) continue;
-                $qty = $entry['quantity'];
-                $totalPrice = $product->selling_price * $qty;
+            // Create order items and reduce stock
+            foreach ($cartItems as $cartItem) {
                 OrderItem::create([
                     'sales_order_id' => $order->id,
-                    'product_id' => $product->id,
-                    'quantity' => $qty,
-                    'unit_price' => $product->selling_price,
-                    'total_price' => $totalPrice,
+                    'product_id' => $cartItem->product_id,
+                    'quantity' => $cartItem->quantity,
+                    'unit_price' => $cartItem->price,
+                    'total_price' => $cartItem->subtotal,
                 ]);
-                $totalAmount += $totalPrice;
+
+                // Reduce stock
+                $cartItem->product->decrement('stock_quantity', $cartItem->quantity);
             }
 
-            $order->update(['total_amount' => $totalAmount]);
-            // clear cart
-            session()->forget('cart');
+            // Clear cart
+            CartItem::where('user_id', auth()->id())->delete();
         });
 
-        return redirect()->route('orders.index')->with('success', 'Order placed successfully.');
+        return redirect()->route('retailer.orders.index')
+            ->with('success', 'Order placed successfully! You will receive a confirmation email shortly.');
     }
 }
