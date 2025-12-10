@@ -5,7 +5,7 @@ services:
     plan: free
     region: oregon
     buildCommand: docker build -t smart-supply .
-    startCommand: docker-compose up
+    # startCommand not needed, uses Dockerfile ENTRYPOINT
     envVars:
       - key: APP_KEY
         generateValue: true

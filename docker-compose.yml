@@ -1,0 +1,46 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: smart-supply
+    container_name: smart-supply-app
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
+      APP_KEY: ${APP_KEY}
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: smart_supply
+      DB_USERNAME: sail
+      DB_PASSWORD: password
+    depends_on:
+      - db
+    networks:
+      - sail
+
+  db:
+    image: postgres:15
+    container_name: smart-supply-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: sail
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: smart_supply
+    volumes:
+      - sail-pgsql:/var/lib/postgresql/data
+    networks:
+      - sail
+
+networks:
+  sail:
+    driver: bridge
+
+volumes:
+  sail-pgsql:
+    driver: local

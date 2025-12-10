@@ -1,0 +1,16 @@
+.git
+.env
+node_modules
+vendor
+storage
+public/build
+public/hot
+public/storage
+tests
+docker-compose.yml
+render.yaml
+README.md
+.phpunit.result.cache
+.editorconfig
+.gitattributes
+.gitignore

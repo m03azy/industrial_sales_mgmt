@@ -12,7 +12,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE sales_orders MODIFY COLUMN status ENUM('draft', 'confirmed', 'shipped', 'paid', 'cancelled', 'delivered', 'pending') DEFAULT 'draft'");
+        $driver = DB::getDriverName();
+
+        if ($driver === 'mysql') {
+            DB::statement("ALTER TABLE sales_orders MODIFY COLUMN status ENUM('draft', 'confirmed', 'shipped', 'paid', 'cancelled', 'delivered', 'pending') DEFAULT 'draft'");
+        } elseif ($driver === 'pgsql') {
+            // For PostgreSQL, we just need to ensure the check constraint doesn't blocking us.
+            // Since we can't easily modify the type without DBAL or complex SQL, 
+            // and usually 'enum' in Laravel/Postgres is just a varchar with a check constraint.
+            // We tring to drop the constraint to allow any string is the safest unblocking move.
+            // The constraint name is usually table_column_check.
+            DB::statement("ALTER TABLE sales_orders DROP CONSTRAINT IF EXISTS sales_orders_status_check");
+        } 
+        // For SQLite, we do nothing. The original migration has been updated for fresh installs.
+        // For existing SQLite dbs, altering is too complex for this hotfix.
     }
 
     /**
@@ -20,10 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Reverting might be dangerous if data exists with new statuses, but for completeness:
-        // We will just leave it as is or revert to original list if we were strict. 
-        // For safety in dev, let's keep the expanded list or just comment it out.
-        // But strictly speaking:
-        // DB::statement("ALTER TABLE sales_orders MODIFY COLUMN status ENUM('draft', 'confirmed', 'shipped', 'paid', 'cancelled') DEFAULT 'draft'");
+        // No-op for safety
     }
 };
