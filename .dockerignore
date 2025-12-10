@@ -2,7 +2,11 @@
 .env
 node_modules
 vendor
-storage
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+storage/logs/*.log
 public/build
 public/hot
 public/storage
