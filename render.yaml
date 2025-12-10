@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: smart-supply
+    env: docker
+    plan: free
+    region: oregon
+    buildCommand: docker build -t smart-supply .
+    startCommand: docker-compose up
+    envVars:
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: smart-supply-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: smart-supply-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: smart-supply-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: smart-supply-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: smart-supply-db
+          property: password
+
+databases:
+  - name: smart-supply-db
+    plan: free
+    databaseName: smart_supply
+    user: smart_supply_user
