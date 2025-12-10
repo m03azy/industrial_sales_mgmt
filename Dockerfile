@@ -37,7 +37,6 @@ RUN npm run build
 
 # Copy Nginx config
 COPY docker/nginx/default.conf /etc/nginx/sites-enabled/default
-COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 
 # Configure PHP-FPM
 COPY docker/php/local.ini /usr/local/etc/php/conf.d/local.ini
