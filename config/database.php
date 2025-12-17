@@ -85,12 +85,12 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'url' => env('DB_URL'),
-            'host' => env('DB_HOST', 'db.etvbecqiztxbwsuxxzaf.supabase.co'),
-            'port' => '6543',
+            'url' => null, // Ignore DATABASE_URL_URI to ensure Port 6543 is used
+            'host' => env('DB_HOST'),
+            'port' => env('DB_PORT', '6543'),
             'database' => env('DB_DATABASE', 'postgres'),
-            'username' => env('DB_USERNAME', 'postgres'),
-            'password' => env('DB_PASSWORD', '.@8in5PQ8Drxuat'),
+            'username' => env('DB_USERNAME'),
+            'password' => env('DB_PASSWORD'),
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
@@ -103,12 +103,12 @@ return [
 
         'postgres' => [
             'driver' => 'pgsql',
-            'url' => env('DB_URL'),
-            'host' => env('DB_HOST', 'db.etvbecqiztxbwsuxxzaf.supabase.co'),
-            'port' => '6543',
+            'url' => null,
+            'host' => env('DB_HOST'),
+            'port' => env('DB_PORT', '6543'),
             'database' => env('DB_DATABASE', 'postgres'),
-            'username' => env('DB_USERNAME', 'postgres'),
-            'password' => env('DB_PASSWORD', '.@8in5PQ8Drxuat'),
+            'username' => env('DB_USERNAME'),
+            'password' => env('DB_PASSWORD'),
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
