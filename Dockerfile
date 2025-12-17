@@ -16,6 +16,9 @@ RUN apt-get update && apt-get install -y \
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+    
+# Prefer IPv4 over IPv6
+RUN echo "precedence ::ffff:0:0/96 100" >> /etc/gai.conf
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd opcache
