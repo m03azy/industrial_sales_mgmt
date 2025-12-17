@@ -87,7 +87,7 @@ return [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),
             'host' => env('DB_HOST', 'db.etvbecqiztxbwsuxxzaf.supabase.co'),
-            'port' => env('DB_PORT', '5432'),
+            'port' => env('DB_PORT', '6543'),
             'database' => env('DB_DATABASE', 'postgres'),
             'username' => env('DB_USERNAME', 'postgres'),
             'password' => env('DB_PASSWORD', '.@8in5PQ8Drxuat'),
@@ -96,13 +96,16 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => 'prefer',
+            'options' => [
+                PDO::ATTR_EMULATE_PREPARES => true,
+            ],
         ],
 
         'postgres' => [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),
             'host' => env('DB_HOST', 'db.etvbecqiztxbwsuxxzaf.supabase.co'),
-            'port' => env('DB_PORT', '5432'),
+            'port' => env('DB_PORT', '6543'),
             'database' => env('DB_DATABASE', 'postgres'),
             'username' => env('DB_USERNAME', 'postgres'),
             'password' => env('DB_PASSWORD', '.@8in5PQ8Drxuat'),
@@ -111,6 +114,9 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => 'prefer',
+            'options' => [
+                PDO::ATTR_EMULATE_PREPARES => true,
+            ],
         ],
 
         'sqlsrv' => [
