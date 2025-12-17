@@ -16,7 +16,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'pgsql'),
 
     /*
     |--------------------------------------------------------------------------
@@ -87,7 +87,7 @@ return [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),
             'host' => env('DB_HOST', 'db.etvbecqiztxbwsuxxzaf.supabase.co'),
-            'port' => env('DB_PORT', '6543'),
+            'port' => '6543',
             'database' => env('DB_DATABASE', 'postgres'),
             'username' => env('DB_USERNAME', 'postgres'),
             'password' => env('DB_PASSWORD', '.@8in5PQ8Drxuat'),
@@ -105,7 +105,7 @@ return [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),
             'host' => env('DB_HOST', 'db.etvbecqiztxbwsuxxzaf.supabase.co'),
-            'port' => env('DB_PORT', '6543'),
+            'port' => '6543',
             'database' => env('DB_DATABASE', 'postgres'),
             'username' => env('DB_USERNAME', 'postgres'),
             'password' => env('DB_PASSWORD', '.@8in5PQ8Drxuat'),
