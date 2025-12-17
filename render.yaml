@@ -17,29 +17,16 @@ services:
         value: stderr
       - key: DB_CONNECTION
         value: pgsql
+      # Database settings (Manual input for Supabase)
       - key: DB_HOST
-        fromDatabase:
-          name: smart-supply-db
-          property: host
+        sync: false
       - key: DB_PORT
-        fromDatabase:
-          name: smart-supply-db
-          property: port
+        value: "5432"
       - key: DB_DATABASE
-        fromDatabase:
-          name: smart-supply-db
-          property: database
+        value: "postgres"
       - key: DB_USERNAME
-        fromDatabase:
-          name: smart-supply-db
-          property: user
+        sync: false
       - key: DB_PASSWORD
-        fromDatabase:
-          name: smart-supply-db
-          property: password
+        sync: false
 
-databases:
-  - name: smart-supply-db
-    plan: free
-    databaseName: smart_supply
-    user: smart_supply_user
+# Database section removed to use external Supabase DB
