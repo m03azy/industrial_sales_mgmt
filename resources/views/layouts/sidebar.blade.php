@@ -82,10 +82,17 @@
                 </div>
             </x-nav-link>
 
-            <x-nav-link :href="route('admin.deliveries.index')" :active="request()->routeIs('admin.deliveries.*')" class="block py-3 px-4 rounded transition duration-200 hover:bg-indigo-800 hover:text-white {{ request()->routeIs('admin.deliveries.*') ? 'bg-indigo-800 text-white' : 'text-indigo-100' }}">
+            <x-nav-link :href="route('admin.deliveries.index')" :active="request()->routeIs('admin.deliveries.*') && !request()->routeIs('admin.deliveries.map')" class="block py-3 px-4 rounded transition duration-200 hover:bg-indigo-800 hover:text-white {{ request()->routeIs('admin.deliveries.*') && !request()->routeIs('admin.deliveries.map') ? 'bg-indigo-800 text-white' : 'text-indigo-100' }}">
                 <div class="flex items-center gap-3">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     {{ __('Deliveries') }}
+                </div>
+            </x-nav-link>
+
+            <x-nav-link :href="route('admin.deliveries.map')" :active="request()->routeIs('admin.deliveries.map')" class="block py-3 px-4 rounded transition duration-200 hover:bg-indigo-800 hover:text-white {{ request()->routeIs('admin.deliveries.map') ? 'bg-indigo-800 text-white' : 'text-indigo-100' }}">
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 7m0 13V7m0 0L9 4"></path></svg>
+                    {{ __('Deliveries Map') }}
                 </div>
             </x-nav-link>
 
@@ -188,10 +195,17 @@
         @if(auth()->user()->role === 'driver')
             <div class="mt-4 mb-2 px-4 text-xs font-semibold text-indigo-400 uppercase tracking-wider">Driver Operations</div>
             
-            <x-nav-link :href="route('driver.deliveries.index')" :active="request()->routeIs('driver.deliveries.*')" class="block py-3 px-4 rounded transition duration-200 hover:bg-indigo-800 hover:text-white {{ request()->routeIs('driver.deliveries.*') ? 'bg-indigo-800 text-white' : 'text-indigo-100' }}">
+            <x-nav-link :href="route('driver.deliveries.index')" :active="request()->routeIs('driver.deliveries.index')" class="block py-3 px-4 rounded transition duration-200 hover:bg-indigo-800 hover:text-white {{ request()->routeIs('driver.deliveries.index') ? 'bg-indigo-800 text-white' : 'text-indigo-100' }}">
                 <div class="flex items-center gap-3">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 012-2v0a2 2 0 012 2m9-2a2 2 0 012 2v0a2 2 0 012-2"></path></svg>
                     {{ __('My Deliveries') }}
+                </div>
+            </x-nav-link>
+
+            <x-nav-link :href="route('driver.deliveries.map')" :active="request()->routeIs('driver.deliveries.map')" class="block py-3 px-4 rounded transition duration-200 hover:bg-indigo-800 hover:text-white {{ request()->routeIs('driver.deliveries.map') ? 'bg-indigo-800 text-white' : 'text-indigo-100' }}">
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 7m0 13V7m0 0L9 4"></path></svg>
+                    {{ __('My Deliveries Map') }}
                 </div>
             </x-nav-link>
         @endif

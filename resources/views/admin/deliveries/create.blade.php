@@ -91,7 +91,15 @@
                                 <!-- Pickup Address -->
                                 <div>
                                     <label for="pickup_address" class="block text-sm font-medium text-gray-700">Pickup Address</label>
-                                    <input type="text" name="pickup_address" id="pickup_address" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Enter pickup location">
+                                    <div class="flex gap-2">
+                                        <input type="text" name="pickup_address" id="pickup_address" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Enter pickup location">
+                                        <button type="button" onclick="getCurrentLocation('pickup')" class="mt-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md border border-gray-300" title="Use my current location">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                     <input type="hidden" name="pickup_latitude" id="pickup_latitude">
                                     <input type="hidden" name="pickup_longitude" id="pickup_longitude">
                                     @error('pickup_address')
@@ -102,7 +110,15 @@
                                 <!-- Delivery Address -->
                                 <div>
                                     <label for="delivery_address" class="block text-sm font-medium text-gray-700">Delivery Address</label>
-                                    <input type="text" name="delivery_address" id="delivery_address" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Enter delivery location">
+                                    <div class="flex gap-2">
+                                        <input type="text" name="delivery_address" id="delivery_address" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Enter delivery location">
+                                        <button type="button" onclick="getCurrentLocation('delivery')" class="mt-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md border border-gray-300" title="Use my current location">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                     <input type="hidden" name="delivery_latitude" id="delivery_latitude">
                                     <input type="hidden" name="delivery_longitude" id="delivery_longitude">
                                     @error('delivery_address')
@@ -115,6 +131,11 @@
                                 <p class="text-sm text-blue-800"><span class="font-semibold">Distance:</span> <span id="distance-display">-</span> km</p>
                                 <p class="text-sm text-blue-800"><span class="font-semibold">Estimated Duration:</span> <span id="duration-display">-</span> minutes</p>
                             </div>
+                        </div>
+
+                        <div class="mt-8">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Location Preview</h3>
+                            <div id="create-delivery-map" style="height: 350px; width: 100%; border-radius: 8px;" class="border"></div>
                         </div>
 
                         <div class="mt-6 flex justify-end">
@@ -130,7 +151,54 @@
 
     @push('scripts')
     <script>
+        function getCurrentLocation(type) {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser');
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    document.getElementById(type + '_latitude').value = lat;
+                    document.getElementById(type + '_longitude').value = lng;
+                    
+                    // Reverse geocode to get address
+                    const geocoder = new google.maps.Geocoder();
+                    const latlng = { lat: parseFloat(lat), lng: parseFloat(lng) };
+                    
+                    geocoder.geocode({ location: latlng }, (results, status) => {
+                        if (status === 'OK') {
+                            if (results[0]) {
+                                document.getElementById(type + '_address').value = results[0].formatted_address;
+                                calculateDistance();
+                            } else {
+                                alert('No results found');
+                            }
+                        } else {
+                            alert('Geocoder failed due to: ' + status);
+                        }
+                    });
+                },
+                (error) => {
+                    alert('Unable to retrieve your location');
+                }
+            );
+        }
+
+        let map, pickupMarker, deliveryMarker;
+
         function initAutocomplete() {
+            const mapElement = document.getElementById('create-delivery-map');
+            if (mapElement) {
+                map = new google.maps.Map(mapElement, {
+                    zoom: 12,
+                    center: { lat: 0, lng: 0 }
+                });
+            }
+
             const pickupInput = document.getElementById('pickup_address');
             const deliveryInput = document.getElementById('delivery_address');
             
@@ -140,20 +208,88 @@
             pickupAutocomplete.addListener('place_changed', () => {
                 const place = pickupAutocomplete.getPlace();
                 if (place.geometry) {
-                    document.getElementById('pickup_latitude').value = place.geometry.location.lat();
-                    document.getElementById('pickup_longitude').value = place.geometry.location.lng();
-                    calculateDistance();
+                    setMarker('pickup', place.geometry.location.lat(), place.geometry.location.lng(), place.formatted_address);
                 }
             });
             
             deliveryAutocomplete.addListener('place_changed', () => {
                 const place = deliveryAutocomplete.getPlace();
                 if (place.geometry) {
-                    document.getElementById('delivery_latitude').value = place.geometry.location.lat();
-                    document.getElementById('delivery_longitude').value = place.geometry.location.lng();
-                    calculateDistance();
+                    setMarker('delivery', place.geometry.location.lat(), place.geometry.location.lng(), place.formatted_address);
                 }
             });
+
+            // Order Selection Handler
+            document.getElementById('order_id').addEventListener('change', function() {
+                const orderId = this.value;
+                if (!orderId) return;
+
+                fetch(`/admin/orders/${orderId}/details`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.delivery_address) {
+                            document.getElementById('delivery_address').value = data.delivery_address;
+                            if (data.delivery_latitude && data.delivery_longitude) {
+                                setMarker('delivery', data.delivery_latitude, data.delivery_longitude, data.delivery_address);
+                            } else {
+                                // If no coordinates, just geocode the address
+                                const geocoder = new google.maps.Geocoder();
+                                geocoder.geocode({ address: data.delivery_address }, (results, status) => {
+                                    if (status === 'OK') {
+                                        setMarker('delivery', results[0].geometry.location.lat(), results[0].geometry.location.lng(), results[0].formatted_address);
+                                    }
+                                });
+                            }
+                        }
+                    });
+            });
+        }
+
+        function setMarker(type, lat, lng, address) {
+            lat = parseFloat(lat);
+            lng = parseFloat(lng);
+            const pos = { lat, lng };
+
+            if (type === 'pickup') {
+                document.getElementById('pickup_latitude').value = lat;
+                document.getElementById('pickup_longitude').value = lng;
+                document.getElementById('pickup_address').value = address;
+                
+                if (pickupMarker) pickupMarker.setMap(null);
+                pickupMarker = new google.maps.Marker({
+                    position: pos,
+                    map: map,
+                    title: 'Pickup',
+                    icon: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png'
+                });
+            } else {
+                document.getElementById('delivery_latitude').value = lat;
+                document.getElementById('delivery_longitude').value = lng;
+                document.getElementById('delivery_address').value = address;
+
+                if (deliveryMarker) deliveryMarker.setMap(null);
+                deliveryMarker = new google.maps.Marker({
+                    position: pos,
+                    map: map,
+                    title: 'Delivery',
+                    icon: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+                });
+            }
+
+            updateMapBounds();
+            calculateDistance();
+        }
+
+        function updateMapBounds() {
+            const bounds = new google.maps.LatLngBounds();
+            let hasPoints = false;
+            if (pickupMarker) { bounds.extend(pickupMarker.getPosition()); hasPoints = true; }
+            if (deliveryMarker) { bounds.extend(deliveryMarker.getPosition()); hasPoints = true; }
+            
+            if (hasPoints) {
+                map.fitBounds(bounds);
+                if (map.getZoom() > 15) map.setZoom(15);
+            }
         }
 
         function calculateDistance() {

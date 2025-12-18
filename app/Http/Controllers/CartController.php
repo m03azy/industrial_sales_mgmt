@@ -157,7 +157,7 @@ class CartController extends Controller
             }
         }
 
-        \DB::transaction(function () use ($cartItems, $retailer, $validated) {
+        \DB::transaction(function () use ($cartItems, $retailer, $validated, $request) {
             // Calculate totals
             $subtotal = $cartItems->sum('subtotal');
             $tax = $subtotal * 0.18;
@@ -175,6 +175,8 @@ class CartController extends Controller
                 'tax' => $tax,
                 'total_amount' => $total,
                 'delivery_address' => $validated['delivery_address'],
+                'delivery_latitude' => $request->delivery_latitude,
+                'delivery_longitude' => $request->delivery_longitude,
                 'delivery_notes' => $validated['delivery_notes'] ?? null,
                 'payment_method' => $validated['payment_method'],
             ]);

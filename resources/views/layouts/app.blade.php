@@ -57,15 +57,27 @@
         </script>
 
         <!-- Google Maps API -->
-        <script>
-            window.googleMapsApiKey = '{{ env('GOOGLE_MAPS_API_KEY', 'YOUR_API_KEY_HERE') }}';
-        </script>
-        <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY', 'YOUR_API_KEY_HERE') }}&libraries=places&callback=initGoogleMaps" async defer></script>
-        <script>
-            function initGoogleMaps() {
-                window.dispatchEvent(new Event('google-maps-loaded'));
-            }
-        </script>
+        @if(config('services.google.maps_api_key'))
+            <script>
+                window.googleMapsApiKey = '{{ config('services.google.maps_api_key') }}';
+            </script>
+            <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_api_key') }}&libraries=places&callback=initGoogleMaps" async defer></script>
+            <script>
+                function initGoogleMaps() {
+                    window.dispatchEvent(new Event('google-maps-loaded'));
+                }
+            </script>
+        @else
+            <script>
+                console.warn('Google Maps API Key is missing. Please add GOOGLE_MAPS_API_KEY to your .env file.');
+                window.addEventListener('load', () => {
+                    const mapPlaceholders = document.querySelectorAll('[id$="-map"], [id^="map-"]');
+                    mapPlaceholders.forEach(el => {
+                        el.innerHTML = '<div class="flex items-center justify-center h-full bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center text-gray-500"><div><svg class="mx-auto h-12 w-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 7m0 13V7m0 0L9 4"></path></svg><p class="font-semibold text-gray-900">Map Configuration Missing</p><p class="text-sm">Please provide a valid Google Maps API Key in the settings.</p></div></div>';
+                    });
+                });
+            </script>
+        @endif
         
         @stack('scripts')
     </body>

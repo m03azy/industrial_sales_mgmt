@@ -159,4 +159,18 @@ class SalesOrderController extends Controller
         $order->delete();
         return redirect()->route('orders.index')->with('success', 'Order deleted.');
     }
+
+    /**
+     * Get order details in JSON for AJAX requests.
+     */
+    public function getDetails(SalesOrder $order)
+    {
+        return response()->json([
+            'delivery_address' => $order->delivery_address,
+            'delivery_latitude' => $order->delivery_latitude,
+            'delivery_longitude' => $order->delivery_longitude,
+            'retailer' => $order->retailer ? $order->retailer->company_name : 'No Retailer',
+            'total_amount' => $order->total_amount,
+        ]);
+    }
 }

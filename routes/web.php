@@ -89,6 +89,7 @@ Route::middleware('auth')->group(function () {
     });
     // Delivery management routes (admin only)
     Route::middleware(['auth', \App\Http\Middleware\EnsureAdmin::class])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('deliveries/map', [\App\Http\Controllers\DeliveryController::class, 'map'])->name('deliveries.map');
         Route::resource('deliveries', \App\Http\Controllers\DeliveryController::class);
         Route::resource('drivers', \App\Http\Controllers\Admin\DriverController::class);
         
@@ -110,6 +111,7 @@ Route::middleware('auth')->group(function () {
         Route::post('disputes/{dispute}/resolve', [\App\Http\Controllers\Admin\DisputeController::class, 'resolve'])->name('disputes.resolve');
 
         // Order Management
+        Route::get('orders/{order}/details', [\App\Http\Controllers\SalesOrderController::class, 'getDetails'])->name('orders.details');
         Route::resource('orders', \App\Http\Controllers\SalesOrderController::class);
 
         // User Management
@@ -148,6 +150,7 @@ Route::middleware('auth')->group(function () {
 
     // Driver Portal
     Route::middleware(['auth'])->prefix('driver')->name('driver.')->group(function () {
+        Route::get('deliveries/map', [\App\Http\Controllers\Driver\DriverDeliveryController::class, 'map'])->name('deliveries.map');
         Route::get('deliveries', [\App\Http\Controllers\Driver\DriverDeliveryController::class, 'index'])->name('deliveries.index');
         Route::get('deliveries/{delivery}', [\App\Http\Controllers\Driver\DriverDeliveryController::class, 'show'])->name('deliveries.show');
         Route::patch('deliveries/{delivery}/status', [\App\Http\Controllers\Driver\DriverDeliveryController::class, 'updateStatus'])->name('deliveries.update-status');

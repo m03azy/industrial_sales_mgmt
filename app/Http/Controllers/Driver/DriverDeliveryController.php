@@ -38,6 +38,27 @@ class DriverDeliveryController extends Controller
     }
 
     /**
+     * Display a map of the driver's assigned deliveries.
+     */
+    public function map()
+    {
+        $driver = Auth::user()->driver;
+        
+        if (!$driver) {
+            return redirect()->route('dashboard')->with('error', 'Driver profile not found.');
+        }
+
+        $deliveries = Delivery::where('driver_id', $driver->id)
+            ->whereNotNull('delivery_latitude')
+            ->whereNotNull('delivery_longitude')
+            ->whereIn('status', ['assigned', 'in_transit'])
+            ->with('order')
+            ->get();
+
+        return view('driver.deliveries.map', compact('deliveries'));
+    }
+
+    /**
      * Display the specified delivery.
      */
     public function show(Delivery $delivery)

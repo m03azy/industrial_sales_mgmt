@@ -20,6 +20,19 @@ class DeliveryController extends Controller
     }
 
     /**
+     * Display a map of active deliveries.
+     */
+    public function map()
+    {
+        $deliveries = Delivery::whereNotNull('delivery_latitude')
+            ->whereNotNull('delivery_longitude')
+            ->whereIn('status', ['pending', 'assigned', 'in_transit'])
+            ->with(['driver.user', 'order'])
+            ->get();
+        return view('admin.deliveries.map', compact('deliveries'));
+    }
+
+    /**
      * Show the form for creating a new delivery.
      */
     public function create()

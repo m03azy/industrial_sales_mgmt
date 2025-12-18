@@ -22,6 +22,8 @@ class SalesOrder extends Model
         'delivery_address',
         'delivery_notes',
         'payment_method',
+        'delivery_latitude',
+        'delivery_longitude',
     ];
 
     protected $casts = [
